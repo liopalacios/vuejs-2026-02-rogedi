@@ -60,6 +60,7 @@
                   :items="['DNI', 'Pasaporte', 'Carnet de Extranjería']"
                   label="Tipo de Documento"
                   required
+                  :rules="[v => !!v || 'Tipo de documento es obligatorio']"
                 ></v-select>
               </v-col>
               <v-col cols="12" sm="7">
@@ -67,30 +68,40 @@
                   v-model="form.numeroDocumento"
                   label="Número de Documento"
                   required
+                  :rules="reglasNumeroDocumento"
                 ></v-text-field>
               </v-col>
             </v-row>            
-            <v-text-field v-model="form.direccion" label="Dirección"></v-text-field>
+            <v-text-field v-model="form.direccion" label="Dirección" 
+              :rules="[v => !!v || 'Dirección es obligatorio']"
+              required></v-text-field>
             
             <v-row>
               <v-col cols="12" sm="7">
-                <v-text-field v-model="form.email" label="Email"></v-text-field>
+                <v-text-field v-model="form.email" label="Email"                 
+                  :rules="reglasEmail"
+                  required></v-text-field>
               </v-col>
               <v-col cols="12" sm="5">
                 <v-text-field 
                   v-model="form.fechaNacimiento"
                   placeholder="dd/mm/aaaa"
-                  maxlength="10"
+                  maxlength="10"                  
                   @input="form.fechaNacimiento = formatFecha(form.fechaNacimiento)"
-                  label="Fecha de nacimiento" type="text"></v-text-field>
+                  label="Fecha de nacimiento" type="text" 
+                  :rules="reglasFechaNacimiento"
+                  required></v-text-field>
               </v-col>
             </v-row>
             <v-row>
               <v-col cols="12" sm="8">
-                <v-text-field v-model="form.telefono" label="Teléfono"></v-text-field>
+                <v-text-field v-model="form.telefono" label="Teléfono" required :rules="reglasTelefono"></v-text-field>
               </v-col>
               <v-col cols="12" sm="4">
-                <v-text-field v-model="form.costo" label="Costo" type="number"></v-text-field>
+                <v-text-field v-model="form.costo" label="Costo" type="number"
+                :rules="[
+                  v => !v || !isNaN(parseFloat(v)) || 'Debe ser un número válido'
+                ]"></v-text-field>
               </v-col>
             </v-row>
             
@@ -98,7 +109,7 @@
         </v-card-text>
         <v-card-actions>
           <v-btn text @click="dialog = false">Cancelar</v-btn>
-          <v-btn color="primary" @click="guardar()">Guardar</v-btn>
+          <v-btn color="primary" @click="guardar()" :disabled="!formValido">Guardar</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -160,6 +171,67 @@ const tecnicosFiltrados = computed(() => {
     return matchNombre && matchDocumento;
   });
 });
+const reglasNumeroDocumento = computed(() => {
+  return [
+    v => !!v || 'Número de documento es obligatorio',
+    v => {
+      if (!v) return true;
+      const tipo = form.value.tipoDocumento;
+      if (tipo === 'DNI') {
+        return (v.length === 8 && /^\d+$/.test(v)) || 'DNI debe tener 8 dígitos numéricos';
+      } else if (tipo === 'Carnet de Extranjería') {
+        return (v.length === 9 && /^\d+$/.test(v)) || 'Carnet de Extranjería debe tener 9 dígitos numéricos';
+      } else if (tipo === 'Pasaporte') {
+        return (v.length <= 12) || 'Pasaporte debe tener máximo 12 caracteres';
+      }
+      return true;
+    }
+  ];
+});
+const formValido = computed(() => {
+  if (!form.value) return false;
+  
+  // Campos obligatorios (excepto costo)
+  const obligatorios = [
+    form.value.nombres,
+    form.value.apellidos,
+    form.value.tipoDocumento,
+    form.value.numeroDocumento,
+    form.value.direccion,
+    form.value.email,
+    form.value.fechaNacimiento,
+    form.value.telefono
+  ];
+  
+  if (obligatorios.some(campo => !campo)) return false;
+  
+  // Validación específica de documento
+  const tipoDoc = form.value.tipoDocumento;
+  const numDoc = form.value.numeroDocumento;
+  
+  if (tipoDoc === 'DNI' && (!/^\d{8}$/.test(numDoc))) return false;
+  if (tipoDoc === 'Carnet de Extranjería' && (!/^\d{9}$/.test(numDoc))) return false;
+  if (tipoDoc === 'Pasaporte' && numDoc.length > 12) return false;
+  
+  // Validación email
+  if (!/.+@.+\..+/.test(form.value.email)) return false;
+  
+  // Validación teléfono
+  if (!/^\d{9}$/.test(form.value.telefono)) return false;
+  
+  // Validación mayor de edad
+  if (validarMayorEdad(form.value.fechaNacimiento) !== true) return false;
+  
+  return true;
+});
+const reglasEmail = [
+  v => !!v || 'Email es obligatorio',
+  v => /.+@.+\..+/.test(v) || 'Email debe tener un formato válido'
+];
+const reglasTelefono = [
+  v => !!v || 'Teléfono es obligatorio',
+  v => /^\d{9}$/.test(v) || 'Teléfono debe tener 9 dígitos numéricos'
+];
 function abrirFormulario(tecnico = null) {
   form.value = tecnico ? { ...tecnico } : {};
   if (form.value.fechaNacimiento) {
@@ -246,4 +318,31 @@ function formatFecha(value) {
 
   return value.substring(0, 10); // limitar a 10 caracteres
 }
+const validarMayorEdad = (fecha) => {
+  if (!fecha) return 'Fecha de nacimiento es obligatoria';
+  
+  const partes = fecha.split('/');
+  if (partes.length !== 3) return 'Formato de fecha inválido';
+  
+  const dia = parseInt(partes[0]);
+  const mes = parseInt(partes[1]) - 1;
+  const anio = parseInt(partes[2]);
+  
+  const fechaNac = new Date(anio, mes, dia);
+  const hoy = new Date();
+  
+  let edad = hoy.getFullYear() - fechaNac.getFullYear();
+  const mesDiff = hoy.getMonth() - fechaNac.getMonth();
+  
+  if (mesDiff < 0 || (mesDiff === 0 && hoy.getDate() < fechaNac.getDate())) {
+    edad--;
+  }
+  
+  return edad >= 18 || 'Debe ser mayor de 18 años';
+};
+
+const reglasFechaNacimiento = [
+  v => !!v || 'Fecha de nacimiento es obligatoria',
+  v => validarMayorEdad(v)
+];
 </script>

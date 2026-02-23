@@ -136,7 +136,6 @@ const headers = [
   { title: 'ID', key: 'id' },
   { title: 'Codigo', key: 'codigo' },
   { title: 'Nombre', key: 'descripcion' },
-  { title: 'Cantidad', key: 'cantidad' },
   { title: 'Series', key: 'series' },
   { title: 'Acciones', key: 'acciones', sortable: false }
 ];

@@ -351,7 +351,6 @@ const headers = [
   { title: 'Doc. Ref.', key: 'nroDocref', width: '100px', sortable: false },
   { title: 'Técnico', key: 'tecnico', width: '150px', sortable: false },
   { title: 'Observación', key: 'observacion', width: '190px', sortable: false },
-  { title: 'ID User', key: 'usuarioId', width: '80px', sortable: false },
   { title: 'Usuario', key: 'usuarioRegistro', width: '100px', sortable: false },
  
   { title: 'Fecha Sis.', key: 'creadoEn', width: '120px', sortable: false },

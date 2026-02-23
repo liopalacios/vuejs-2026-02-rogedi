@@ -358,7 +358,6 @@ const headers = [
   { title: 'Doc. referencia', key: 'nroDocref', width: '110px', sortable: false },
   { title: 'Técnico', key: 'tecnico', width: '180px', sortable: false },
   { title: 'Observacion', key: 'observacion', width: '180px', sortable: false },
-  { title: 'Id Usuario', key: 'usuarioId', width: '110px', sortable: false },
   { title: 'Usuario', key: 'usuarioRegistro', width: '110px', sortable: false },
   
   { title: 'Fecha Sistema', key: 'creadoEn', width: '250px', sortable: false },
@@ -512,7 +511,7 @@ async function exportarExcel() {
       page: 0,
       size: 10000
     })
-    
+    console.log('Registros para exportar:', todosAtendidos)
     // --- PESTAÑA 1: STOCK ATENDIDOS (Vista Principal) ---
     const datosExcel = todosAtendidos.map((item, index) => ({
       '#': index + 1,
@@ -544,6 +543,8 @@ async function exportarExcel() {
     const materialesMap = new Map()
     
     todosAtendidos.forEach(item => {
+      const tecnicoNombre = item.tecnicoNombreCompleto || '-';
+      const tecnicoNumeroDocumento = item.tecnicoNumeroDocumento || '';
       const key = `${item.sap || ''}|${item.articulo || ''}|${item.descripcion || ''}|${item.unidadMedida || ''}`
       if (!materialesMap.has(key)) {
         materialesMap.set(key, {
@@ -555,6 +556,9 @@ async function exportarExcel() {
           movimientos: new Set(),
           contratistas: new Set(),
           tecnicos: new Set(),
+          fecMovimiento: item.fecMovimiento || '',
+          tecnicoNombres: tecnicoNombre,
+          tecnicoNumeroDocumento: tecnicoNumeroDocumento,
           tiposMovimiento: new Set()
         })
       }
@@ -570,11 +574,14 @@ async function exportarExcel() {
       '#': index + 1,
       'Código SAP': material.sap,
       'Código Artículo': material.articulo,
+      'Fecha Movimiento': formatearFecha(material.fecMovimiento),
       'Descripción': material.descripcion,
       'Unidad Medida': material.unidadMedida,
       'Cantidad Total Atendida': material.cantidadTotal,
       'N° Movimientos': material.movimientos.size,
       'N° Contratistas': material.contratistas.size,
+      'Técnico': material.tecnicoNombres,
+      'Documento': material.tecnicoNumeroDocumento,
       'N° Técnicos': material.tecnicos.size,
       'Tipos Movimiento': Array.from(material.tiposMovimiento).join(', '),
       'Contratistas': Array.from(material.contratistas).join(', '),
@@ -592,7 +599,8 @@ async function exportarExcel() {
       if (item.serie && item.serie.trim() !== '') {
         // Dividir series múltiples (separadas por coma, espacio, etc)
         const series = item.serie.split(',').map(s => s.trim()).filter(s => s !== '')
-        
+        const tecnicoNombre = item.tecnicoNombreCompleto || '-';
+        const tecnicoNumeroDocumento = item.tecnicoNumeroDocumento || '';
         series.forEach((serie, serieIndex) => {
           seriesData.push({
             '#': seriesData.length + 1,
@@ -600,7 +608,8 @@ async function exportarExcel() {
             'Fecha Movimiento': formatearFecha(item.fecMovimiento),
             'Tipo Movimiento': item.tipoMovimiento || '',
             'Contratista': item.contratista || '',
-            'Técnico': item.tecnico || '',
+            'Técnico': tecnicoNombre,
+            'Documento': tecnicoNumeroDocumento,
             'Código SAP': item.sap || '',
             'Artículo': item.articulo || '',
             'Descripción': item.descripcion || '',
