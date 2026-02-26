@@ -122,7 +122,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 //import { useTecnicosStore } from '../../store/tecnicos';
-import { getTecnicos, crearTecnico, modificarTecnico } from '@/services/tecnicoService';
+import { getTecnicos, crearTecnico, modificarTecnico, buscarTecnico, eliminarTecnico } from '@/services/tecnicoService';
 
 //const tecnicosStore = useTecnicosStore();
 const snackbar = ref({
@@ -259,6 +259,12 @@ async function guardar() {
     if (tecnico.fechaNacimiento) {
       tecnico.fechaNacimiento = convertirFechaISO(tecnico.fechaNacimiento);
     }
+    const tecnicoExistente = await buscarTecnico(null, tecnico.numeroDocumento, tecnico.tipoDocumento);
+    console.log('Técnico existente encontrado:', tecnicoExistente);
+    if (tecnicoExistente && tecnicoExistente.length > 0) {
+      mostrarSnackbar('Ya existe un técnico con el mismo nombre y número de documento', 'error');
+      return;
+    }
     console.log('Guardando técnico:', tecnico);
     if (tecnico.id) {
       console.log('Modificando técnico con ID:', tecnico.id);
@@ -289,8 +295,15 @@ function mostrarSnackbar(text, color = 'success') {
   snackbar.value.color = color;
   snackbar.value.show = true;
 }
-function eliminar(id) {
-  tecnicosStore.eliminarTecnico(id);
+async function eliminar(id) {
+  const delet = await eliminarTecnico(id);
+  console.log('Respuesta al eliminar:', delet);
+  if (delet === 1) {
+    mostrarSnackbar('Técnico eliminado correctamente', 'success');
+    tecnicos.value = await getTecnicos();
+  } else {
+    mostrarSnackbar('Error al eliminar técnico', 'error');
+  }
 }
 function formatFecha(value) {
   console.log('Formato antes:', value);

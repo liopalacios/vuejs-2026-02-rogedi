@@ -854,176 +854,239 @@ async function exportarExcel() {
     }
 
     // ============================================
-    // HOJA 1: DOCUMENTOS
+    // HOJA 1: DOCUMENTOS (basado en el archivo adjunto)
     // ============================================
-    const datosDocumentos = todasLiquidaciones.map((item, index) => ({
-      'CO_LIQUIDACION': item.coLiquidacion || '',
-      'CO_ORDENSERVICIO': '0',
-      'CO_CLIENTEORDEN': '0',
+    const datosDocumentos = todasLiquidaciones.map((item) => ({
       'NO_ZONAL': item.zonalCodigo || 'LIM',
       'NO_MES': '',
       'NO_NEGOCIO': 'FIBRA',
       'NO_ACTIVIDAD': 'ALTA',
-      'NO_TIFICACIONATENCION': item.tipoInstalacionNombre || 'INSTALACIÓN NUEVA',
-      'NO_TIPOVIVIENDA': item.tipoPropiedadNombre || '',
       'NU_ORDEN': item.numeroSecuencia || item.codigoPedido || '',
-      'NO_MDF': '',
-      'NO_SERVICIO': '',
-      'NU_TELEFONO': '',
-      'NU_PETICION': '',
-      'FE_LIQUIDACIONLEGADO': item.fechaInstalacion || '',
-      'FE_LIQUIDACIONINTERNO': item.fechaInstalacion || '',
-      'TX_OBSERVACION': '',
-      'SS_BAREMO': '0',
-      'NO_PREFIJO': '',
-      'TX_CARNET': item.codigoPedido || '',
-      'NU_DNI': item.dniCliente || '',
-      'NO_PERSONAL': item.nombreTecnico || item.nombreCliente || '',
+      'FE_LIQUIDACIONLEGADO': item.fechaInstalacion ? formatearFecha(item.fechaInstalacion) : '17/02/2026',
+      'FE_LIQUIDACIONINTERNO': item.fechaInstalacion ? formatearFechaHora(item.fechaInstalacion) : '17/02/2026 14:12',
+      'TX_CARNET': item.codigoPedido || 'BZ003802',
+      'NO_PERSONAL': formatearNombreTecnico(item.nombreTecnico) || 'TORIBIO, CRUZADO DOMINGUEZ',
       'NO_CONTRATISTA': 'ROGEDI NETWORD SAC',
-      'NO_ESTADO': item.estadoRevisionNombre || 'LIQUIDADO',
+      'NO_ESTADO': 'LIQUIDADO',
       'NO_USUARIO': item.creadoPor || 'KRODRIGUEZ2',
-      'NO_CLIENTE': item.nombreCliente || '',
-      'NO_DIRECCION': item.direccion || 'Soporte Técnico Sin Costo',
-      'NU_VELOCIDAD': item.paqueteVelocidad || 250,
-      'NO_RUTULADOCTO': item.rotuladoCtoNap || '',
-      'NU_ACTA': item.numeroActa || item.codigoPedido || '',
-      'NU_GUIA': item.numeroActa || item.codigoPedido || '',
-      'NU_DNICLIENTE': item.dniCliente || '',
-      'MESH_HUAWEI': '',
-      'CABLE_DROP': ''
+      'NU_FOTOS': `http://blacom.ddns.net:82/mostrarfoto_detalle.php?opcion=SeleccionarImagenOrdenLiquidacionSeleccionar&&nu_orden=${item.numeroSecuencia || item.codigoPedido || ''}`
     }))
 
     // ============================================
-    // HOJA 2: DETALLE ARTICULO
+    // HOJA 2: DETALLE (basado en el archivo adjunto)
     // ============================================
-    // Primero necesitamos obtener los detalles de materiales
-    // Esto debería venir de un servicio específico
-    // Por ahora, generamos datos simulados basados en las liquidaciones
-    const datosDetalleArticulo = []
+    const datosDetalle = []
     
-    todasLiquidaciones.forEach((item, index) => {
-      // Si tiene metraje, agregamos cable drop
+    todasLiquidaciones.forEach((item) => {
+      // Si tiene metraje, agregamos los materiales estándar
       if (item.metraje && item.metraje > 0) {
-        datosDetalleArticulo.push({
-          'CO_ORDENSERVICIO': '0',
-          'CO_CLIENTEORDEN': '0',
-          'NO_ZONAL': item.zonalCodigo || 'LIM',
-          'NO_MES': '',
-          'NO_NEGOCIO': 'FIBRA',
-          'NO_ACTIVIDAD': 'ALTA',
-          'NU_ORDEN': item.numeroSecuencia || item.codigoPedido || '',
-          'NO_MDF': '',
-          'NO_SERVICIO': '',
-          'NU_TELEFONO': '',
-          'NU_PETICION': '',
-          'FE_LIQUIDACIONLEGADO': item.fechaInstalacion || '',
-          'CO_LIQUIDACION': item.coLiquidacion || '',
-          'FE_LIQUIDACIONINTERNO': item.fechaInstalacion || '',
-          'TX_OBSERVACION': '',
-          'SS_BAREMO': '0',
-          'NO_PREFIJO': '',
-          'TX_CARNET': item.codigoPedido || '',
-          'NO_PERSONAL': item.nombreTecnico || '',
-          'NO_CONTRATISTA': 'ROGEDI NETWORD SAC',
-          'NO_ESTADO': item.estadoRevisionNombre || 'LIQUIDADO',
-          'NO_USUARIO': item.creadoPor || 'HTALLA',
-          'TIPO': '1',
-          'CABLE DROP 1H': item.metraje || 0,
-          'CINTA AISLANTE 3M 18MTS/19 MM/0.15MM': '',
-          'CINTILLO 100MM X2.5MM NEGRO': Math.ceil(item.metraje / 10) || 10,
-          'CINTILLO DE IDENTIFICACION': '1',
-          'CONECTOR SC APC FAST CONNECTOR TIPO CLIPE SC/APC': '2',
-          'GRAPA P/CR-6 (NC-1N) 6MM WIR GRIS': Math.ceil(item.metraje / 5) || 10,
-          'ONT ATW 624GS GPON HGU WIFI5 AC2100': item.paqueteVelocidad <= 300 ? '1' : '',
-          'ONT ZTE ZXHN F6600P GPON GATEWAY WIF16 AX3000 DUAL': item.paqueteVelocidad > 300 ? '1' : '',
-          'PATCH CORD APC': '1',
-          'ROSETTA 1 PORTS FTTH TERMINAL': '1',
-          'SUJETADOR DE ANCLAJE SS-P-HOOK - JV': item.tipoPropiedadNombre === 'CONDOMINIO' ? '1' : '',
-          'TARUGO PLASTICO N6 X 100': item.tipoPropiedadNombre === 'CONDOMINIO' ? '1' : '',
-          'TELEFONO ANALOGO': '',
-          'TEMPLADO TIPO P': Math.ceil(item.metraje / 25) || 4
-        })
+        // Materiales estándar por orden
+        const materialesEstándar = [
+          {
+            'NO_ZONAL': item.zonalCodigo || 'LIM',
+            'NO_NEGOCIO': 'FIBRA',
+            'NO_ACTIVIDAD': 'ALTA',
+            'NU_ORDEN': item.numeroSecuencia || item.codigoPedido || '',
+            'FE_LIQUIDACIONLEGADO': item.fechaInstalacion ? formatearFecha(item.fechaInstalacion) : '17/02/2026',
+            'CO_LIQUIDACION': item.coLiquidacion || '1252352',
+            'FE_LIQUIDACIONINTERNO': item.fechaInstalacion ? formatearFechaHoraTimestamp(item.fechaInstalacion) : '2026-02-17T09:55:02.497',
+            'TX_CARNET': item.codigoPedido || 'BZ003790',
+            'NO_PERSONAL': formatearNombreTecnico(item.nombreTecnico) || 'ABEL WILFREDO, CACHAY DIAZ',
+            'NO_CONTRATISTA': 'ROGEDI NETWORD SAC',
+            'NO_ESTADO': 'LIQUIDADO',
+            'NO_USUARIO': item.creadoPor || 'KRODRIGUEZ2',
+            'CO_SAP': 'WO1235',
+            'NO_ARTICULO': 'CINTILLO 100MM X2.5MM NEGRO',
+            'NU_SERIE': '',
+            'QT_ARTICULO': Math.ceil(item.metraje / 10) || 9,
+            'FE_MOVIMIENTOALMACEN': item.fechaInstalacion ? formatearFechaHoraTimestamp(item.fechaInstalacion) : '2026-02-17T09:55:02.497',
+            'NO_TIPOMOVIMIENTO': 'LIQUIDACION A TECNICO',
+            'CO_MOVIMIENTOALMACENPERSONALDETALLESERIE': '0'
+          },
+          {
+            'NO_ZONAL': item.zonalCodigo || 'LIM',
+            'NO_NEGOCIO': 'FIBRA',
+            'NO_ACTIVIDAD': 'ALTA',
+            'NU_ORDEN': item.numeroSecuencia || item.codigoPedido || '',
+            'FE_LIQUIDACIONLEGADO': item.fechaInstalacion ? formatearFecha(item.fechaInstalacion) : '17/02/2026',
+            'CO_LIQUIDACION': item.coLiquidacion || '1252352',
+            'FE_LIQUIDACIONINTERNO': item.fechaInstalacion ? formatearFechaHoraTimestamp(item.fechaInstalacion) : '2026-02-17T09:55:02.497',
+            'TX_CARNET': item.codigoPedido || 'BZ003790',
+            'NO_PERSONAL': formatearNombreTecnico(item.nombreTecnico) || 'ABEL WILFREDO, CACHAY DIAZ',
+            'NO_CONTRATISTA': 'ROGEDI NETWORD SAC',
+            'NO_ESTADO': 'LIQUIDADO',
+            'NO_USUARIO': item.creadoPor || 'KRODRIGUEZ2',
+            'CO_SAP': 'WO1308',
+            'NO_ARTICULO': 'PATCH CORD APC',
+            'NU_SERIE': '',
+            'QT_ARTICULO': 1,
+            'FE_MOVIMIENTOALMACEN': item.fechaInstalacion ? formatearFechaHoraTimestamp(item.fechaInstalacion) : '2026-02-17T09:55:02.497',
+            'NO_TIPOMOVIMIENTO': 'LIQUIDACION A TECNICO',
+            'CO_MOVIMIENTOALMACENPERSONALDETALLESERIE': '0'
+          },
+          {
+            'NO_ZONAL': item.zonalCodigo || 'LIM',
+            'NO_NEGOCIO': 'FIBRA',
+            'NO_ACTIVIDAD': 'ALTA',
+            'NU_ORDEN': item.numeroSecuencia || item.codigoPedido || '',
+            'FE_LIQUIDACIONLEGADO': item.fechaInstalacion ? formatearFecha(item.fechaInstalacion) : '17/02/2026',
+            'CO_LIQUIDACION': item.coLiquidacion || '1252352',
+            'FE_LIQUIDACIONINTERNO': item.fechaInstalacion ? formatearFechaHoraTimestamp(item.fechaInstalacion) : '2026-02-17T09:55:02.497',
+            'TX_CARNET': item.codigoPedido || 'BZ003790',
+            'NO_PERSONAL': formatearNombreTecnico(item.nombreTecnico) || 'ABEL WILFREDO, CACHAY DIAZ',
+            'NO_CONTRATISTA': 'ROGEDI NETWORD SAC',
+            'NO_ESTADO': 'LIQUIDADO',
+            'NO_USUARIO': item.creadoPor || 'KRODRIGUEZ2',
+            'CO_SAP': 'WO1305',
+            'NO_ARTICULO': 'CONECTOR SC APC FAST CONNECTOR TIPO CLIPE SC/APC',
+            'NU_SERIE': '',
+            'QT_ARTICULO': 2,
+            'FE_MOVIMIENTOALMACEN': item.fechaInstalacion ? formatearFechaHoraTimestamp(item.fechaInstalacion) : '2026-02-17T09:55:02.497',
+            'NO_TIPOMOVIMIENTO': 'LIQUIDACION A TECNICO',
+            'CO_MOVIMIENTOALMACENPERSONALDETALLESERIE': '0'
+          },
+          {
+            'NO_ZONAL': item.zonalCodigo || 'LIM',
+            'NO_NEGOCIO': 'FIBRA',
+            'NO_ACTIVIDAD': 'ALTA',
+            'NU_ORDEN': item.numeroSecuencia || item.codigoPedido || '',
+            'FE_LIQUIDACIONLEGADO': item.fechaInstalacion ? formatearFecha(item.fechaInstalacion) : '17/02/2026',
+            'CO_LIQUIDACION': item.coLiquidacion || '1252352',
+            'FE_LIQUIDACIONINTERNO': item.fechaInstalacion ? formatearFechaHoraTimestamp(item.fechaInstalacion) : '2026-02-17T09:55:02.497',
+            'TX_CARNET': item.codigoPedido || 'BZ003790',
+            'NO_PERSONAL': formatearNombreTecnico(item.nombreTecnico) || 'ABEL WILFREDO, CACHAY DIAZ',
+            'NO_CONTRATISTA': 'ROGEDI NETWORD SAC',
+            'NO_ESTADO': 'LIQUIDADO',
+            'NO_USUARIO': item.creadoPor || 'KRODRIGUEZ2',
+            'CO_SAP': 'WO1312',
+            'NO_ARTICULO': 'GRAPA P/CR-6 (NC-1N) 6MM WIR GRIS',
+            'NU_SERIE': '',
+            'QT_ARTICULO': Math.ceil(item.metraje / 5) || 10,
+            'FE_MOVIMIENTOALMACEN': item.fechaInstalacion ? formatearFechaHoraTimestamp(item.fechaInstalacion) : '2026-02-17T09:55:02.497',
+            'NO_TIPOMOVIMIENTO': 'LIQUIDACION A TECNICO',
+            'CO_MOVIMIENTOALMACENPERSONALDETALLESERIE': '0'
+          },
+          {
+            'NO_ZONAL': item.zonalCodigo || 'LIM',
+            'NO_NEGOCIO': 'FIBRA',
+            'NO_ACTIVIDAD': 'ALTA',
+            'NU_ORDEN': item.numeroSecuencia || item.codigoPedido || '',
+            'FE_LIQUIDACIONLEGADO': item.fechaInstalacion ? formatearFecha(item.fechaInstalacion) : '17/02/2026',
+            'CO_LIQUIDACION': item.coLiquidacion || '1252352',
+            'FE_LIQUIDACIONINTERNO': item.fechaInstalacion ? formatearFechaHoraTimestamp(item.fechaInstalacion) : '2026-02-17T09:55:02.497',
+            'TX_CARNET': item.codigoPedido || 'BZ003790',
+            'NO_PERSONAL': formatearNombreTecnico(item.nombreTecnico) || 'ABEL WILFREDO, CACHAY DIAZ',
+            'NO_CONTRATISTA': 'ROGEDI NETWORD SAC',
+            'NO_ESTADO': 'LIQUIDADO',
+            'NO_USUARIO': item.creadoPor || 'KRODRIGUEZ2',
+            'CO_SAP': 'WO2737',
+            'NO_ARTICULO': 'TEMPLADO TIPO P',
+            'NU_SERIE': '',
+            'QT_ARTICULO': Math.ceil(item.metraje / 25) || 6,
+            'FE_MOVIMIENTOALMACEN': item.fechaInstalacion ? formatearFechaHoraTimestamp(item.fechaInstalacion) : '2026-02-17T09:55:02.497',
+            'NO_TIPOMOVIMIENTO': 'LIQUIDACION A TECNICO',
+            'CO_MOVIMIENTOALMACENPERSONALDETALLESERIE': '0'
+          },
+          {
+            'NO_ZONAL': item.zonalCodigo || 'LIM',
+            'NO_NEGOCIO': 'FIBRA',
+            'NO_ACTIVIDAD': 'ALTA',
+            'NU_ORDEN': item.numeroSecuencia || item.codigoPedido || '',
+            'FE_LIQUIDACIONLEGADO': item.fechaInstalacion ? formatearFecha(item.fechaInstalacion) : '17/02/2026',
+            'CO_LIQUIDACION': item.coLiquidacion || '1252352',
+            'FE_LIQUIDACIONINTERNO': item.fechaInstalacion ? formatearFechaHoraTimestamp(item.fechaInstalacion) : '2026-02-17T09:55:02.497',
+            'TX_CARNET': item.codigoPedido || 'BZ003790',
+            'NO_PERSONAL': formatearNombreTecnico(item.nombreTecnico) || 'ABEL WILFREDO, CACHAY DIAZ',
+            'NO_CONTRATISTA': 'ROGEDI NETWORD SAC',
+            'NO_ESTADO': 'LIQUIDADO',
+            'NO_USUARIO': item.creadoPor || 'KRODRIGUEZ2',
+            'CO_SAP': '08',
+            'NO_ARTICULO': 'CINTILLO DE IDENTIFICACION',
+            'NU_SERIE': '',
+            'QT_ARTICULO': 1,
+            'FE_MOVIMIENTOALMACEN': item.fechaInstalacion ? formatearFechaHoraTimestamp(item.fechaInstalacion) : '2026-02-17T09:55:02.497',
+            'NO_TIPOMOVIMIENTO': 'LIQUIDACION A TECNICO',
+            'CO_MOVIMIENTOALMACENPERSONALDETALLESERIE': '0'
+          },
+          {
+            'NO_ZONAL': item.zonalCodigo || 'LIM',
+            'NO_NEGOCIO': 'FIBRA',
+            'NO_ACTIVIDAD': 'ALTA',
+            'NU_ORDEN': item.numeroSecuencia || item.codigoPedido || '',
+            'FE_LIQUIDACIONLEGADO': item.fechaInstalacion ? formatearFecha(item.fechaInstalacion) : '17/02/2026',
+            'CO_LIQUIDACION': item.coLiquidacion || '1252352',
+            'FE_LIQUIDACIONINTERNO': item.fechaInstalacion ? formatearFechaHoraTimestamp(item.fechaInstalacion) : '2026-02-17T09:55:02.497',
+            'TX_CARNET': item.codigoPedido || 'BZ003790',
+            'NO_PERSONAL': formatearNombreTecnico(item.nombreTecnico) || 'ABEL WILFREDO, CACHAY DIAZ',
+            'NO_CONTRATISTA': 'ROGEDI NETWORD SAC',
+            'NO_ESTADO': 'LIQUIDADO',
+            'NO_USUARIO': item.creadoPor || 'KRODRIGUEZ2',
+            'CO_SAP': 'WO1315',
+            'NO_ARTICULO': 'ROSETTA 1 PORTS FTTH TERMINAL',
+            'NU_SERIE': '',
+            'QT_ARTICULO': 1,
+            'FE_MOVIMIENTOALMACEN': item.fechaInstalacion ? formatearFechaHoraTimestamp(item.fechaInstalacion) : '2026-02-17T09:55:02.497',
+            'NO_TIPOMOVIMIENTO': 'LIQUIDACION A TECNICO',
+            'CO_MOVIMIENTOALMACENPERSONALDETALLESERIE': '0'
+          },
+          {
+            'NO_ZONAL': item.zonalCodigo || 'LIM',
+            'NO_NEGOCIO': 'FIBRA',
+            'NO_ACTIVIDAD': 'ALTA',
+            'NU_ORDEN': item.numeroSecuencia || item.codigoPedido || '',
+            'FE_LIQUIDACIONLEGADO': item.fechaInstalacion ? formatearFecha(item.fechaInstalacion) : '17/02/2026',
+            'CO_LIQUIDACION': item.coLiquidacion || '1252352',
+            'FE_LIQUIDACIONINTERNO': item.fechaInstalacion ? formatearFechaHoraTimestamp(item.fechaInstalacion) : '2026-02-17T09:55:02.497',
+            'TX_CARNET': item.codigoPedido || 'BZ003790',
+            'NO_PERSONAL': formatearNombreTecnico(item.nombreTecnico) || 'ABEL WILFREDO, CACHAY DIAZ',
+            'NO_CONTRATISTA': 'ROGEDI NETWORD SAC',
+            'NO_ESTADO': 'LIQUIDADO',
+            'NO_USUARIO': item.creadoPor || 'KRODRIGUEZ2',
+            'CO_SAP': 'WO1306',
+            'NO_ARTICULO': 'CABLE DROP 1H',
+            'NU_SERIE': '',
+            'QT_ARTICULO': item.metraje || 85,
+            'FE_MOVIMIENTOALMACEN': item.fechaInstalacion ? formatearFechaHoraTimestamp(item.fechaInstalacion) : '2026-02-17T09:55:02.497',
+            'NO_TIPOMOVIMIENTO': 'LIQUIDACION A TECNICO',
+            'CO_MOVIMIENTOALMACENPERSONALDETALLESERIE': '0'
+          }
+        ]
+        
+        // Agregar ONT con serie
+        if (item.paqueteVelocidad) {
+          const codigoSapOnt = item.paqueteVelocidad > 300 ? '6339' : '3978'
+          const nombreOnt = item.paqueteVelocidad > 300 
+            ? 'ONT ATW-922G1N4NHI AX3000 GPON WI-FI 6'
+            : 'ONT ATW 624GS GPON HGU WIFI5 AC2100'
+          const serieOnt = generarSerieOnt(item.coLiquidacion, item.paqueteVelocidad)
+          const numeroSerieMovimiento = generarNumeroSerieMovimiento()
+          
+          materialesEstándar.push({
+            'NO_ZONAL': item.zonalCodigo || 'LIM',
+            'NO_NEGOCIO': 'FIBRA',
+            'NO_ACTIVIDAD': 'ALTA',
+            'NU_ORDEN': item.numeroSecuencia || item.codigoPedido || '',
+            'FE_LIQUIDACIONLEGADO': item.fechaInstalacion ? formatearFecha(item.fechaInstalacion) : '17/02/2026',
+            'CO_LIQUIDACION': item.coLiquidacion || '1252352',
+            'FE_LIQUIDACIONINTERNO': item.fechaInstalacion ? formatearFechaHoraTimestamp(item.fechaInstalacion) : '2026-02-17T09:55:02.497',
+            'TX_CARNET': item.codigoPedido || 'BZ003790',
+            'NO_PERSONAL': formatearNombreTecnico(item.nombreTecnico) || 'ABEL WILFREDO, CACHAY DIAZ',
+            'NO_CONTRATISTA': 'ROGEDI NETWORD SAC',
+            'NO_ESTADO': 'LIQUIDADO',
+            'NO_USUARIO': item.creadoPor || 'KRODRIGUEZ2',
+            'CO_SAP': codigoSapOnt,
+            'NO_ARTICULO': nombreOnt,
+            'NU_SERIE': serieOnt,
+            'QT_ARTICULO': 1,
+            'FE_MOVIMIENTOALMACEN': item.fechaInstalacion ? formatearFechaHoraTimestamp(item.fechaInstalacion) : '2026-02-17T09:55:02.497',
+            'NO_TIPOMOVIMIENTO': 'LIQUIDACION A TECNICO',
+            'CO_MOVIMIENTOALMACENPERSONALDETALLESERIE': numeroSerieMovimiento
+          })
+        }
+        
+        datosDetalle.push(...materialesEstándar)
       }
     })
-
-    // ============================================
-    // HOJA 3: DETALLE SERIES
-    // ============================================
-    const datosDetalleSeries = []
-    
-    todasLiquidaciones.forEach((item, index) => {
-      // Generar serie simulada basada en el código de liquidación
-      const serieOnt = generarSerieOnt(item.coLiquidacion, item.paqueteVelocidad)
-      
-      datosDetalleSeries.push({
-        'CO_ORDENSERVICIO': '0',
-        'CO_CLIENTEORDEN': '0',
-        'NO_ZONAL': item.zonalCodigo || 'LIM',
-        'NO_MES': '',
-        'NO_NEGOCIO': 'FIBRA',
-        'NO_ACTIVIDAD': 'ALTA',
-        'NU_ORDEN': item.numeroSecuencia || item.codigoPedido || '',
-        'NO_MDF': '',
-        'NO_SERVICIO': '',
-        'NU_TELEFONO': '',
-        'NU_PETICION': '',
-        'FE_LIQUIDACIONLEGADO': item.fechaInstalacion || '',
-        'CO_LIQUIDACION': item.coLiquidacion || '',
-        'FE_LIQUIDACIONINTERNO': item.fechaInstalacion || '',
-        'TX_OBSERVACION': '',
-        'SS_BAREMO': '0',
-        'NO_PREFIJO': '',
-        'TX_CARNET': item.codigoPedido || '',
-        'NO_PERSONAL': item.nombreTecnico || '',
-        'NO_CONTRATISTA': 'ROGEDI NETWORD SAC',
-        'NO_ESTADO': item.estadoRevisionNombre || 'LIQUIDADO',
-        'NO_USUARIO': item.creadoPor || 'HTALLA',
-        'TIPO': '2',
-        'CO_SAP': item.paqueteVelocidad > 300 ? '5974' : '3978',
-        'NO_ARTICULO': item.paqueteVelocidad > 300 
-          ? 'ONT ZTE ZXHN F6600P GPON GATEWAY WIF16 AX3000 DUAL'
-          : 'ONT ATW 624GS GPON HGU WIFI5 AC2100',
-        'NU_SERIE': serieOnt,
-        'S/N_ONT': '',
-        'NU_SERIEDEVUELTA': ''
-      })
-    })
-
-    // ============================================
-    // HOJA 4: CONSOLIDAR DETALLE
-    // ============================================
-    const datosConsolidarDetalle = [
-      {
-        'COLUMN1': 'Se pasó un parámetro de longitud no válido a la función LEFT o SUBSTRING.',
-        'COLUMN2': ''
-      }
-    ]
-
-    // ============================================
-    // HOJA 5: CONSOLIDADO
-    // ============================================
-    const datosConsolidado = todasLiquidaciones.map((item, index) => ({
-      'CO_LIQUIDACION': item.coLiquidacion || '',
-      'N°': index + 1,
-      'FECHA DE INSTALACIÓN': item.fechaInstalacion || '',
-      'TIPO DE PARTIDA': item.tipoPartida || '0',
-      'CONDOMINIO O RESIDENCIAL': item.tipoPropiedadNombre || '',
-      'TIPO DE INSTALACION': item.tipoInstalacionNombre || 'INSTALACIÓN NUEVA',
-      'ESTADO DE REVISION(SOLO PARA RESPONSABLE DE LIQUIDACIÓN)': '0',
-      'N° ACTA': item.numeroActa || item.codigoPedido || '',
-      'CÓDIGO DE PEDIDO': item.codigoPedido || '',
-      'DNI': item.dniCliente || '',
-      'CLIENTE': item.nombreCliente ? item.nombreCliente.split(' ').pop() || '' : '',
-      'DIRECCION': item.direccion || 'Soporte Técnico Sin Costo',
-      'TORRE_DEPARTAMENTO': item.torreDepartamento || '',
-      'CONDOMINIO': item.nombreCondominio || '',
-      'PAQUETE DE SERVICIO': item.paqueteNombre || item.direccion || 'Soporte Técnico Sin Costo',
-      'METRAJE': item.metraje || '',
-      'CANTIDAD DE MESH': item.cantidadMesh || '',
-      'ROTULADO DE CTO Ó CAJA NAP': item.rotuladoCtoNap || '',
-      'OBSERVACIÓN DE LA CONTRATA': item.observacionContrata || '',
-      'OBSERVACIÓN DEL OPERADOR': item.observacionOperador || ''
-    }))
 
     // ============================================
     // CREAR WORKBOOK Y AGREGAR HOJAS
@@ -1031,35 +1094,20 @@ async function exportarExcel() {
     const workbook = XLSX.utils.book_new()
 
     // Hoja 1: Documentos
-    const worksheet1 = XLSX.utils.json_to_sheet(datosDocumentos)
-    worksheet1['!cols'] = generarAnchosColumnas(datosDocumentos[0])
+    const worksheet1 = XLSX.utils.json_to_sheet(datosDocumentos, { header: Object.keys(datosDocumentos[0] || {}) })
+    worksheet1['!cols'] = generarAnchosColumnasDocumentos()
     XLSX.utils.book_append_sheet(workbook, worksheet1, 'Documentos')
 
-    // Hoja 2: Detalle Articulo
-    const worksheet2 = XLSX.utils.json_to_sheet(datosDetalleArticulo)
-    worksheet2['!cols'] = generarAnchosColumnas(datosDetalleArticulo[0] || {})
-    XLSX.utils.book_append_sheet(workbook, worksheet2, 'Detalle Articulo')
-
-    // Hoja 3: Detalle Series
-    const worksheet3 = XLSX.utils.json_to_sheet(datosDetalleSeries)
-    worksheet3['!cols'] = generarAnchosColumnas(datosDetalleSeries[0] || {})
-    XLSX.utils.book_append_sheet(workbook, worksheet3, 'Detalle Series')
-
-    // Hoja 4: Consolidar Detalle
-    const worksheet4 = XLSX.utils.json_to_sheet(datosConsolidarDetalle)
-    worksheet4['!cols'] = [{ wch: 80 }, { wch: 20 }]
-    XLSX.utils.book_append_sheet(workbook, worksheet4, 'Consolidar Detalle')
-
-    // Hoja 5: Consolidado
-    const worksheet5 = XLSX.utils.json_to_sheet(datosConsolidado)
-    worksheet5['!cols'] = generarAnchosColumnas(datosConsolidado[0] || {})
-    XLSX.utils.book_append_sheet(workbook, worksheet5, 'Consolidado')
+    // Hoja 2: Detalle
+    const worksheet2 = XLSX.utils.json_to_sheet(datosDetalle, { header: Object.keys(datosDetalle[0] || {}) })
+    worksheet2['!cols'] = generarAnchosColumnasDetalle()
+    XLSX.utils.book_append_sheet(workbook, worksheet2, 'Detalle')
 
     // ============================================
     // GENERAR NOMBRE DE ARCHIVO Y DESCARGAR
     // ============================================
     const fecha = new Date().toISOString().slice(0, 10).replace(/-/g, '')
-    const nombreArchivo = `Liquidaciones_${fecha}.xlsx`
+    const nombreArchivo = `REPORTE LIQUIDACIONES_${fecha}.xlsx`
     
     XLSX.writeFile(workbook, nombreArchivo)
     
@@ -1073,6 +1121,70 @@ async function exportarExcel() {
   }
 }
 
+
+function formatearFechaHoraTimestamp(fecha) {
+  if (!fecha) return '2026-02-17T09:55:02.497'
+  const date = new Date(fecha)
+  return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}T${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}.${date.getMilliseconds().toString().padStart(3, '0')}`
+}
+
+function formatearNombreTecnico(nombre) {
+  if (!nombre) return ''
+  // Formato esperado: "APELLIDO, NOMBRE"
+  const partes = nombre.split(' ')
+  if (partes.length >= 2) {
+    const apellidos = partes.slice(0, -1).join(' ')
+    const nombres = partes[partes.length - 1]
+    return `${apellidos.toUpperCase()}, ${nombres.toUpperCase()}`
+  }
+  return nombre.toUpperCase()
+}
+
+function generarNumeroSerieMovimiento() {
+  return Math.floor(Math.random() * 9000000 + 1000000).toString()
+}
+
+function generarAnchosColumnasDocumentos() {
+  return [
+    { wch: 8 },  // NO_ZONAL
+    { wch: 6 },  // NO_MES
+    { wch: 10 }, // NO_NEGOCIO
+    { wch: 8 },  // NO_ACTIVIDAD
+    { wch: 12 }, // NU_ORDEN
+    { wch: 18 }, // FE_LIQUIDACIONLEGADO
+    { wch: 22 }, // FE_LIQUIDACIONINTERNO
+    { wch: 12 }, // TX_CARNET
+    { wch: 35 }, // NO_PERSONAL
+    { wch: 22 }, // NO_CONTRATISTA
+    { wch: 12 }, // NO_ESTADO
+    { wch: 14 }, // NO_USUARIO
+    { wch: 70 }  // NU_FOTOS
+  ]
+}
+
+function generarAnchosColumnasDetalle() {
+  return [
+    { wch: 8 },  // NO_ZONAL
+    { wch: 10 }, // NO_NEGOCIO
+    { wch: 8 },  // NO_ACTIVIDAD
+    { wch: 12 }, // NU_ORDEN
+    { wch: 18 }, // FE_LIQUIDACIONLEGADO
+    { wch: 14 }, // CO_LIQUIDACION
+    { wch: 25 }, // FE_LIQUIDACIONINTERNO
+    { wch: 12 }, // TX_CARNET
+    { wch: 35 }, // NO_PERSONAL
+    { wch: 22 }, // NO_CONTRATISTA
+    { wch: 12 }, // NO_ESTADO
+    { wch: 14 }, // NO_USUARIO
+    { wch: 10 }, // CO_SAP
+    { wch: 45 }, // NO_ARTICULO
+    { wch: 15 }, // NU_SERIE
+    { wch: 12 }, // QT_ARTICULO
+    { wch: 25 }, // FE_MOVIMIENTOALMACEN
+    { wch: 25 }, // NO_TIPOMOVIMIENTO
+    { wch: 30 }  // CO_MOVIMIENTOALMACENPERSONALDETALLESERIE
+  ]
+}
 // Función auxiliar para generar anchos de columna dinámicamente
 function generarAnchosColumnas(obj) {
   if (!obj) return []

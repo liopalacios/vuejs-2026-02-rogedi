@@ -9,9 +9,12 @@ export const getTecnicos = async () => {
 };
 
 // Buscar técnico por nombre y documento
-export const buscarTecnico = async (nombre, documento) => {
+export const buscarTecnico = async (nombre, documento, tipo) => {
+  if (tipo === undefined || tipo === null || tipo === '') {
+    tipo = null;
+  }
   const response = await api.get(`${resource}/buscar`, {
-    params: { nombre, documento }
+    params: { nombre, documento, tipo }
   });
   return response.data;
 };
@@ -30,5 +33,12 @@ export const modificarTecnico = async (id, tecnico) => {
 
 // Eliminar técnico
 export const eliminarTecnico = async (id) => {
-  await api.delete(`${resource}/${id}`);
+  try {
+    const response = await api.delete(`${resource}/${id}`);
+    console.log('Respuesta al eliminar:', response);
+    return response.data === 1 ? 1 : 0; // 👈 RETORNA
+  } catch (error) {
+    console.error('Error al eliminar:', error);
+    throw error; // 👈 O lanza el error
+  }
 };

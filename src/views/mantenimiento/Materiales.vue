@@ -100,6 +100,18 @@
               label="Unidad de medida"
               required
             ></v-select>
+             <v-row>
+              <v-col cols="12">
+                <v-checkbox
+                  v-model="form.seriado"
+                  label="Material seriado"
+                  hint="Los materiales seriados requieren registro de número de serie"
+                  persistent-hint
+                  color="primary"
+                ></v-checkbox>
+              </v-col>
+            </v-row>
+            
           </v-form>
         </v-card-text>
         <v-card-actions>
