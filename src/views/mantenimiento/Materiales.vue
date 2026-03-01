@@ -96,7 +96,7 @@
             <v-text-field v-model="form.descripcion" label="Descripción" required></v-text-field>
             <v-select
               v-model="form.unidadMedida"
-              :items="['Kilo', 'Unidad', 'Caja']"
+              :items="['UND', 'MTS']"
               label="Unidad de medida"
               required
             ></v-select>

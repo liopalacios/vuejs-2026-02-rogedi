@@ -19,6 +19,18 @@ export const buscarTecnico = async (nombre, documento, tipo) => {
   return response.data;
 };
 
+export const buscarTecnicoPorEmailTelefono = async (email, telefono) => {
+  if (email === undefined || email === null || email === '') {
+    email = null;
+  }
+  if (telefono === undefined || telefono === null || telefono === '') {
+    telefono = null;
+  }
+  const response = await api.get(`${resource}/buscar-email-telefono`, {
+    params: { email, telefono }
+  });
+  return response.data;
+};
 // Crear técnico
 export const crearTecnico = async (tecnico) => {
   const response = await api.post(resource, tecnico);

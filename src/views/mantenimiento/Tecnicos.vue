@@ -38,7 +38,7 @@
           <v-btn icon color="blue" @click="abrirFormulario(item)">
             <v-icon>mdi-pencil</v-icon>
           </v-btn>
-          <v-btn icon color="red" @click="eliminar(item.id)">
+          <v-btn icon color="red" @click="confirmarEliminar(item)">
             <v-icon>mdi-delete</v-icon>
           </v-btn>
         </template>
@@ -117,13 +117,81 @@
   <v-snackbar v-model="snackbar.show" :color="snackbar.color" top right>
     {{ snackbar.text }}
   </v-snackbar>
+
+  <div>
+    <v-dialog v-model="dialogEliminar" max-width="400px">
+      <v-card>
+        <v-card-title class="text-h6 bg-red-lighten-5 d-flex align-center">
+          <v-icon color="error" class="mr-2">mdi-alert-circle</v-icon>
+          Confirmar eliminación
+        </v-card-title>
+        
+        <v-card-text class="pt-4">
+          <p class="text-body-1 mb-2">
+            ¿Estás seguro que deseas eliminar al técnico?
+          </p>
+          <p class="text-h6 font-weight-bold text-center my-3">
+            {{ tecnicoAEliminar?.nombres }} {{ tecnicoAEliminar?.apellidos }}
+          </p>
+          <p class="text-caption text-medium-emphasis">
+            Esta acción no se puede deshacer y eliminará permanentemente al técnico del sistema.
+          </p>
+          
+          <!-- Información adicional del técnico -->
+          <v-row class="mt-2 text-caption">
+            <v-col cols="6" class="py-1">
+              <span class="font-weight-bold">Documento:</span>
+            </v-col>
+            <v-col cols="6" class="py-1 text-right">
+              {{ tecnicoAEliminar?.tipoDocumento }}: {{ tecnicoAEliminar?.numeroDocumento }}
+            </v-col>
+            <v-col cols="6" class="py-1">
+              <span class="font-weight-bold">Teléfono:</span>
+            </v-col>
+            <v-col cols="6" class="py-1 text-right">
+              {{ tecnicoAEliminar?.telefono || 'No especificado' }}
+            </v-col>
+          </v-row>
+        </v-card-text>
+        
+        <v-divider></v-divider>
+        
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn 
+            variant="text" 
+            @click="dialogEliminar = false"
+            :disabled="eliminando"
+          >
+            Cancelar
+          </v-btn>
+          <v-btn 
+            color="error" 
+            @click="ejecutarEliminar"
+            :loading="eliminando"
+            :disabled="eliminando"
+          >
+            <v-icon left>mdi-delete</v-icon>
+            Sí, eliminar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </div>
+  
+  <v-snackbar v-model="snackbar.show" :color="snackbar.color" top right>
+    {{ snackbar.text }}
+  </v-snackbar>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 //import { useTecnicosStore } from '../../store/tecnicos';
-import { getTecnicos, crearTecnico, modificarTecnico, buscarTecnico, eliminarTecnico } from '@/services/tecnicoService';
-
+import { getTecnicos, crearTecnico, modificarTecnico, buscarTecnico, buscarTecnicoPorEmailTelefono, eliminarTecnico } 
+from '@/services/tecnicoService';
+const dialogEliminar = ref(false);
+const tecnicoAEliminar = ref(null);
+const eliminando = ref(false);
 //const tecnicosStore = useTecnicosStore();
 const snackbar = ref({
   show: false,
@@ -226,12 +294,41 @@ const formValido = computed(() => {
 });
 const reglasEmail = [
   v => !!v || 'Email es obligatorio',
-  v => /.+@.+\..+/.test(v) || 'Email debe tener un formato válido'
+  v => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(v) || 'Email debe tener un formato válido'
 ];
 const reglasTelefono = [
   v => !!v || 'Teléfono es obligatorio',
   v => /^\d{9}$/.test(v) || 'Teléfono debe tener 9 dígitos numéricos'
 ];
+function confirmarEliminar(tecnico) {
+  tecnicoAEliminar.value = tecnico;
+  dialogEliminar.value = true;
+}
+
+async function ejecutarEliminar() {
+  if (!tecnicoAEliminar.value) return;
+  
+  eliminando.value = true;
+  
+  try {
+    const respuesta = await eliminarTecnico(tecnicoAEliminar.value.id);
+    console.log('Respuesta al eliminar:', respuesta);
+    
+    if (respuesta === 1) {
+      mostrarSnackbar('Técnico eliminado correctamente', 'success');
+      tecnicos.value = await getTecnicos();
+    } else {
+      mostrarSnackbar('Error al eliminar técnico', 'error');
+    }
+  } catch (error) {
+    console.error('Error al eliminar:', error);
+    mostrarSnackbar('Error al eliminar técnico', 'error');
+  } finally {
+    eliminando.value = false;
+    dialogEliminar.value = false;
+    tecnicoAEliminar.value = null;
+  }
+}
 function abrirFormulario(tecnico = null) {
   form.value = tecnico ? { ...tecnico } : {};
   if (form.value.fechaNacimiento) {
@@ -263,6 +360,12 @@ async function guardar() {
     console.log('Técnico existente encontrado:', tecnicoExistente);
     if (tecnicoExistente && tecnicoExistente.length > 0) {
       mostrarSnackbar('Ya existe un técnico con el mismo nombre y número de documento', 'error');
+      return;
+    }
+    const tecnicoEmailExistente = await buscarTecnicoPorEmailTelefono(tecnico.email, tecnico.telefono);
+    console.log('Técnico con email o teléfono existente:', tecnicoEmailExistente);
+    if (tecnicoEmailExistente && tecnicoEmailExistente.length > 0) {
+      mostrarSnackbar('Ya existe un técnico con el mismo email o teléfono', 'error');
       return;
     }
     console.log('Guardando técnico:', tecnico);

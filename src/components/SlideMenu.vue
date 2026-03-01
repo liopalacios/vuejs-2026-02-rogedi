@@ -1,5 +1,5 @@
 <template>
-  <v-navigation-drawer v-model="drawer" app>
+  <v-navigation-drawer v-model="drawer" app class="v-navigation-content">
     <div class="d-flex flex-column align-center py-4">
       <v-img
         src="/logorogedi.png"
@@ -113,5 +113,8 @@ function goTo(route) {
   mask-repeat: no-repeat;
   mask-position: center;
   mask-size: cover;
-}  
+}
+.v-navigation-content {
+  background-color: lavender;
+}
 </style>
