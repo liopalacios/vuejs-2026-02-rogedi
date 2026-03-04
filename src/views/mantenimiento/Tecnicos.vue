@@ -358,10 +358,7 @@ async function guardar() {
     }
     const tecnicoExistente = await buscarTecnico(null, tecnico.numeroDocumento, tecnico.tipoDocumento);
     console.log('Técnico existente encontrado:', tecnicoExistente);
-    if (tecnicoExistente && tecnicoExistente.length > 0) {
-      mostrarSnackbar('Ya existe un técnico con el mismo nombre y número de documento', 'error');
-      return;
-    }
+    
     const tecnicoEmailExistente = await buscarTecnicoPorEmailTelefono(tecnico.email, tecnico.telefono);
     console.log('Técnico con email o teléfono existente:', tecnicoEmailExistente);
     if (tecnicoEmailExistente && tecnicoEmailExistente.length > 0) {
@@ -378,6 +375,10 @@ async function guardar() {
         tecnicos.value = await getTecnicos();
       }
     } else {
+      if (tecnicoExistente && tecnicoExistente.length > 0) {
+      mostrarSnackbar('Ya existe un técnico con el mismo nombre y número de documento', 'error');
+        return;
+      }
       console.log('Creando nuevo técnico');
       const creado = await crearTecnico(tecnico);
       console.log('Técnico creado con ID:', creado);
