@@ -42,14 +42,15 @@
             
             class="elevation-1"
           >
-            <template #item.series="{ item }">
-              <v-btn
-                text
-                color="primary"
-                @click="verSeries(item.codigo)"
+            <template #item.seriado="{ item }">
+              <v-chip
+                :color="item.seriado ? 'primary' : 'grey'"
+                :text-color="item.seriado ? 'white' : 'white'"
+                size="small"
+                class="font-weight-bold"
               >
-                {{ item.cantidadSeries }}
-              </v-btn>
+                {{ item.seriado ? 'S' : 'N' }}
+              </v-chip>
             </template>
             <template #item.acciones="{ item }">
               <v-btn icon color="blue" @click="abrirFormulario(item)">
@@ -120,6 +121,9 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" top right>
+      {{ snackbar.text }}
+    </v-snackbar>
   </div>
 </template>
 
@@ -141,14 +145,18 @@ const tab = ref('materiales')
 const series = ref([]);
 const totalSeries = ref(0);
 const materialSeleccionado = ref(null);
-
+const snackbar = ref({
+  show: false,
+  text: '',
+  color: 'success'
+});
 const page = ref(1)                // página actual (empieza en 1)
 const itemsPerPage = ref(10)       // registros por página
 const headers = [
   { title: 'ID', key: 'id' },
   { title: 'Codigo', key: 'codigo' },
   { title: 'Nombre', key: 'descripcion' },
-  { title: 'Series', key: 'series' },
+  { title: 'Seriado', key: 'seriado' },
   { title: 'Acciones', key: 'acciones', sortable: false }
 ];
 const headersSeries = [
@@ -164,6 +172,7 @@ const materialesFiltrados = computed(() => {
   const cod = (searchCodigo.value ?? '').toString().toLowerCase()
   const desc = (searchDescripcion.value ?? '').toString().toLowerCase()
   console.log('Filtrando materiales por:', { cod, desc })
+  console.log('Materiales totales:', materiales.value)
   return materiales.value
     .map((item, index) => ({ ...item, index: index + 1 }))
     .filter((item) => {
@@ -224,10 +233,21 @@ const guardar = async () => {
     //const actualizado = await actualizarMaterial(form.value.id, form.value)
     //materiales.value = materiales.value.map(m => m.id === actualizado.id ? actualizado : m)
   } else {
-    const nuevo = await crearMaterial(form.value)
-    materiales.value.push(nuevo)
+    const resp = await crearMaterial(form.value)
+    if (resp == 1 ) {
+      mostrarSnackbar('Material creado correctamente', 'success');
+      materiales.value = await getMateriales()
+    } else {
+      mostrarSnackbar('Error al crear material', 'error');
+    }
+    
   }
   dialog.value = false
+}
+function mostrarSnackbar(text, color = 'success') {
+  snackbar.value.text = text;
+  snackbar.value.color = color;
+  snackbar.value.show = true;
 }
 
 const eliminar = async (id) => {
