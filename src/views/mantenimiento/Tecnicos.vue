@@ -361,10 +361,7 @@ async function guardar() {
     
     const tecnicoEmailExistente = await buscarTecnicoPorEmailTelefono(tecnico.email, tecnico.telefono);
     console.log('Técnico con email o teléfono existente:', tecnicoEmailExistente);
-    if (tecnicoEmailExistente && tecnicoEmailExistente.length > 0) {
-      mostrarSnackbar('Ya existe un técnico con el mismo email o teléfono', 'error');
-      return;
-    }
+    
     console.log('Guardando técnico:', tecnico);
     if (tecnico.id) {
       console.log('Modificando técnico con ID:', tecnico.id);
@@ -375,6 +372,10 @@ async function guardar() {
         tecnicos.value = await getTecnicos();
       }
     } else {
+      if (tecnicoEmailExistente && tecnicoEmailExistente.length > 0) {
+        mostrarSnackbar('Ya existe un técnico con el mismo email o teléfono', 'error');
+        return;
+      }
       if (tecnicoExistente && tecnicoExistente.length > 0) {
       mostrarSnackbar('Ya existe un técnico con el mismo nombre y número de documento', 'error');
         return;

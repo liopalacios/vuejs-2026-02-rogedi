@@ -56,7 +56,7 @@
               <v-btn icon color="blue" @click="abrirFormulario(item)">
                 <v-icon>mdi-pencil</v-icon>
               </v-btn>
-              <v-btn icon color="red" @click="eliminar(item.id)">
+              <v-btn icon color="red" @click="confirmarEliminar(item)">
                 <v-icon>mdi-delete</v-icon>
               </v-btn>
             </template>
@@ -125,6 +125,52 @@
       {{ snackbar.text }}
     </v-snackbar>
   </div>
+  <div>
+    <v-dialog v-model="dialogEliminar" max-width="400px">
+      <v-card>
+        <v-card-title class="text-h6 bg-red-lighten-5 d-flex align-center">
+          <v-icon color="error" class="mr-2">mdi-alert-circle</v-icon>
+          Confirmar eliminación
+        </v-card-title>
+        
+        <v-card-text class="pt-4">
+          <p class="text-body-1 mb-2">
+            ¿Estás seguro que deseas eliminar el material?
+          </p>
+          <p class="text-h6 font-weight-bold text-center my-3">
+            {{ materialEliminar?.descripcion }}
+          </p>
+          <p class="text-caption text-medium-emphasis">
+            Esta acción no se puede deshacer y eliminará permanentemente el material del sistema.
+          </p>
+          
+          
+        </v-card-text>
+        
+        <v-divider></v-divider>
+        
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn 
+            variant="text" 
+            @click="dialogEliminar = false"
+            :disabled="eliminando"
+          >
+            Cancelar
+          </v-btn>
+          <v-btn 
+            color="error" 
+            @click="ejecutarEliminar"
+            :loading="eliminando"
+            :disabled="eliminando"
+          >
+            <v-icon left>mdi-delete</v-icon>
+            Sí, eliminar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </div>
 </template>
 
 <script setup>
@@ -133,6 +179,9 @@ import { useMaterialesStore } from '../../store/materiales';
 import { getMateriales, crearMaterial, eliminarMaterial } from '@/services/materialesService'
 import { listarSeriesService } from "@/services/seriesService";
 
+const dialogEliminar = ref(false);
+const materialEliminar = ref(null);
+const eliminando = ref(false);
 
 const materiales = ref([])
 const dialog = ref(false)
@@ -210,7 +259,11 @@ const abrirFormulario = (item = null) => {
   form.value = item ? { ...item } : {};
   dialog.value = true;
 }
-
+function confirmarEliminar(material) {
+  console.log('Material a eliminar:', material);
+  materialEliminar.value = material;
+  dialogEliminar.value = true;
+}
 watch([searchCodigo, searchDescripcion], () => {
   if (tab.value === 'series') {
     // Si está en Series, consulta API
@@ -233,6 +286,7 @@ const guardar = async () => {
     //const actualizado = await actualizarMaterial(form.value.id, form.value)
     //materiales.value = materiales.value.map(m => m.id === actualizado.id ? actualizado : m)
   } else {
+    console.log('Guardando nuevo material:', form.value)
     const resp = await crearMaterial(form.value)
     if (resp == 1 ) {
       mostrarSnackbar('Material creado correctamente', 'success');
@@ -250,9 +304,12 @@ function mostrarSnackbar(text, color = 'success') {
   snackbar.value.show = true;
 }
 
-const eliminar = async (id) => {
-  await eliminarMaterial(id)
-  materiales.value = materiales.value.filter(m => m.id !== id)
+const ejecutarEliminar = async () => {
+  console.log('Ejecutando eliminación para material ID:', materialEliminar.value.id);
+  console.log('Material a eliminar:', materialEliminar.value.id);
+  await eliminarMaterial(materialEliminar.value.id)
+  materiales.value = materiales.value.filter(m => m.id !== materialEliminar.value.id)
+  dialogEliminar.value = false;
 }
 function verSeries(codigo) {
   if (!codigo) return
